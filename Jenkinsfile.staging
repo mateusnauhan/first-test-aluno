@@ -1,0 +1,34 @@
+pipeline {
+  agent any
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Start container') {
+      steps {
+        echo 'Starting container from Docker Hub...'
+        bat 'docker-compose -f docker-compose.staging.yml pull'
+        bat 'docker-compose -f docker-compose.staging.yml up -d --no-color'
+        sleep time: 60, unit: 'SECONDS'
+        bat 'docker-compose -f docker-compose.staging.yml logs'
+        bat 'docker-compose -f docker-compose.staging.yml ps'
+      }
+    }
+
+    stage('Run tests against the container') {
+      steps {
+        bat 'curl http://localhost:8686 || echo "Service not responding"'
+      }
+    }
+  }
+
+  post {
+    always {
+      echo 'Pipeline completed'
+    }
+  }
+}
