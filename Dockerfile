@@ -1,13 +1,20 @@
-FROM eclipse-temurin:17
+# Etapa 1 — Build usando Maven
+FROM maven:3.9.6-eclipse-temurin-17 AS build
+WORKDIR /app
 
-# Diretório de trabalho dentro do container
-WORKDIR /first-test-aluno
+# Copiar arquivos do projeto
+COPY pom.xml .
+COPY src ./src
 
-# Copia o JAR que foi criado no pipeline anterior
-COPY target/*.jar app.jar
+# Gerar o JAR
+RUN mvn clean package -DskipTests
 
-# Porta da aplicação (ajuste se necessário)
+# Etapa 2 — Imagem final apenas com o JAR
+FROM eclipse-temurin:17-jdk
+WORKDIR /app
+
+COPY --from=build /app/target/*.jar app.jar
+
 EXPOSE 8080
 
-# Comando para executar
-CMD ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

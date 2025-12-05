@@ -1,21 +1,56 @@
 version: '4'
 
 services:
+
   database:
-    image: postgres
+    image: postgres:15
+    container_name: ac2-database
     environment:
-      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: sapi
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - db-volume:/var/lib/postgresql/data
+      - db-volume:/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    networks:
+      - ac2-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ac2-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
+    networks:
+      - ac2-net
 
   api:
-    image: mateusnauhan/first-test-aluno:latest
-    networks:
-      - default  # Certifique-se de que está usando a rede adequada
+    build: .
+    container_name: ac2-api
     environment:
       DB_HOST: database
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      GEMINI_API_KEY: "AIzaSyAnxoi5JfCUSNlWkPRFYPQTzglRbmP8d6U"
+      MODEL: gemini-2.0-flash
+      SPRING_PROFILES_ACTIVE: staging
+    depends_on:
+      - database
+      - rabbitmq
     ports:
       - "8686:8080"
+    networks:
+      - ac2-net
+
+networks:
+  ac2-net:
+
 volumes:
   db-volume:
