@@ -7,7 +7,7 @@ WORKDIR /first-test-aluno
 COPY target/*.jar app.jar
 
 # Porta da aplicação (ajuste se necessário)
-EXPOSE 8585
+EXPOSE 8080
 
 # Comando para executar
 CMD ["java", "-jar", "app.jar"]
